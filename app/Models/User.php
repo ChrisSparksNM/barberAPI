@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
@@ -28,6 +28,12 @@ class User extends Authenticatable
         'push_notification_token',
         'notifications_enabled',
         'sms_notifications_enabled',
+        'is_active',
+        'profile_image',
+        'bio',
+        'specialties',
+        'working_hours',
+        'hourly_rate',
     ];
 
     /**
@@ -49,7 +55,14 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'notifications_enabled' => 'boolean',
+            'sms_notifications_enabled' => 'boolean',
+            'specialties' => 'array',
+            'working_hours' => 'array',
+            'hourly_rate' => 'decimal:2',
         ];
     }
 
