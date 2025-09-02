@@ -6,9 +6,30 @@ use Illuminate\Console\Command;
 use App\Models\Appointment;
 use App\Http\Controllers\NotificationController;
 use Carbon\Carbon;
+use Exception;
 
 class SendAppointmentReminders extends Command
 {
+    /**
+     * Safely format appointment time
+     */
+    private function formatAppointmentTime($appointmentTime)
+    {
+        try {
+            $timeString = is_string($appointmentTime) 
+                ? $appointmentTime 
+                : $appointmentTime->format('H:i');
+            
+            // Handle different time formats - remove seconds if present
+            if (strlen($timeString) > 5) {
+                $timeString = substr($timeString, 0, 5);
+            }
+            
+            return \Carbon\Carbon::createFromFormat('H:i', $timeString)->format('g:i A');
+        } catch (Exception $e) {
+            return $appointmentTime ?? 'Invalid Time';
+        }
+    }
     /**
      * The name and signature of the console command.
      *
@@ -74,7 +95,7 @@ class SendAppointmentReminders extends Command
         foreach ($appointments as $appointment) {
             $customer = $appointment->user;
             $appointmentDate = $appointment->appointment_date->format('l, F j, Y');
-            $appointmentTime = Carbon::createFromFormat('H:i', $appointment->appointment_time)->format('g:i A');
+            $appointmentTime = $this->formatAppointmentTime($appointment->appointment_time);
             
             $this->line("👤 {$customer->name} ({$customer->phone_number})");
             $this->line("   📅 {$appointmentDate} at {$appointmentTime} with {$appointment->barber_name}");
@@ -127,7 +148,7 @@ class SendAppointmentReminders extends Command
         try {
             $customer = $appointment->user;
             $appointmentDate = $appointment->appointment_date->format('l, F j, Y');
-            $appointmentTime = Carbon::createFromFormat('H:i', $appointment->appointment_time)->format('g:i A');
+            $appointmentTime = $this->formatAppointmentTime($appointment->appointment_time);
             
             // Use the NotificationController to create and send SMS
             $notificationController = new NotificationController();

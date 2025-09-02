@@ -12,6 +12,26 @@ use Exception;
 class NotificationController extends Controller
 {
     /**
+     * Safely format appointment time
+     */
+    private function formatAppointmentTime($appointmentTime)
+    {
+        try {
+            $timeString = is_string($appointmentTime) 
+                ? $appointmentTime 
+                : $appointmentTime->format('H:i');
+            
+            // Handle different time formats - remove seconds if present
+            if (strlen($timeString) > 5) {
+                $timeString = substr($timeString, 0, 5);
+            }
+            
+            return \Carbon\Carbon::createFromFormat('H:i', $timeString)->format('g:i A');
+        } catch (Exception $e) {
+            return $appointmentTime ?? 'Invalid Time';
+        }
+    }
+    /**
      * Send appointment reminder notification
      */
     public function sendAppointmentReminder(Request $request, int $appointmentId): JsonResponse
@@ -59,7 +79,7 @@ class NotificationController extends Controller
             
             // Prepare SMS message
             $appointmentDate = $appointment->appointment_date->format('l, F j, Y');
-            $appointmentTime = \Carbon\Carbon::createFromFormat('H:i', $appointment->appointment_time)->format('g:i A');
+            $appointmentTime = $this->formatAppointmentTime($appointment->appointment_time);
             
             // Create message
             $message = $this->createReminderMessage($appointment, $customer, $appointmentDate, $appointmentTime);

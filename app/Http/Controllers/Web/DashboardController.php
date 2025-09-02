@@ -7,9 +7,30 @@ use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Http\Controllers\NoShowController;
 use Carbon\Carbon;
+use Exception;
 
 class DashboardController extends Controller
 {
+    /**
+     * Safely format appointment time
+     */
+    private function formatAppointmentTime($appointmentTime)
+    {
+        try {
+            $timeString = is_string($appointmentTime) 
+                ? $appointmentTime 
+                : $appointmentTime->format('H:i');
+            
+            // Handle different time formats - remove seconds if present
+            if (strlen($timeString) > 5) {
+                $timeString = substr($timeString, 0, 5);
+            }
+            
+            return \Carbon\Carbon::createFromFormat('H:i', $timeString)->format('g:i A');
+        } catch (Exception $e) {
+            return $appointmentTime ?? 'Invalid Time';
+        }
+    }
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -300,7 +321,7 @@ class DashboardController extends Controller
             'appointments' => $appointments->map(function($appointment) {
                 return [
                     'id' => $appointment->id,
-                    'time' => Carbon::createFromFormat('H:i', $appointment->appointment_time)->format('g:i A'),
+                    'time' => $this->formatAppointmentTime($appointment->appointment_time),
                     'customer_name' => $appointment->user->name,
                     'customer_email' => $appointment->user->email,
                     'barber_name' => $appointment->barber_name,

@@ -2,6 +2,26 @@
 
 @section('title', 'Dashboard - Taos Empire Barber Shop')
 
+@php
+    // Helper function to safely format appointment time
+    function formatAppointmentTime($appointmentTime) {
+        try {
+            $timeString = is_string($appointmentTime) 
+                ? $appointmentTime 
+                : $appointmentTime->format('H:i');
+            
+            // Handle different time formats - remove seconds if present
+            if (strlen($timeString) > 5) {
+                $timeString = substr($timeString, 0, 5);
+            }
+            
+            return \Carbon\Carbon::createFromFormat('H:i', $timeString)->format('g:i A');
+        } catch (Exception $e) {
+            return $appointmentTime ?? 'Invalid Time';
+        }
+    }
+@endphp
+
 @section('content')
 <div class="space-y-6">
     <!-- Header -->
@@ -266,7 +286,7 @@
                                             @elseif($appointment->appointment_status === 'cancelled') bg-gray-600 text-white
                                             @else bg-blue-600 text-white
                                             @endif">
-                                            {{ \Carbon\Carbon::createFromFormat('H:i', $appointment->appointment_time)->format('g:i A') }}
+                                            {{ formatAppointmentTime($appointment->appointment_time) }}
                                         </div>
                                     @endforeach
                                     
@@ -318,7 +338,7 @@
                             @foreach($appointments as $appointment)
                                 <tr class="hover:bg-gray-750">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-white">
-                                        {{ \Carbon\Carbon::createFromFormat('H:i', $appointment->appointment_time)->format('g:i A') }}
+                                        {{ formatAppointmentTime($appointment->appointment_time) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-white">{{ $appointment->user->name }}</div>
@@ -435,7 +455,7 @@
                                         <!-- Send Reminder Button (for all appointments that aren't cancelled) -->
                                         @if($appointment->appointment_status !== 'cancelled')
                                             <button 
-                                                onclick="sendReminder({{ $appointment->id }}, '{{ $appointment->user->name }}', '{{ $appointment->barber_name }}', '{{ $appointment->appointment_date->format('l, F j, Y') }}', '{{ \Carbon\Carbon::createFromFormat('H:i', $appointment->appointment_time)->format('g:i A') }}')"
+                                                onclick="sendReminder({{ $appointment->id }}, '{{ $appointment->user->name }}', '{{ $appointment->barber_name }}', '{{ $appointment->appointment_date->format('l, F j, Y') }}', '{{ formatAppointmentTime($appointment->appointment_time) }}')"
                                                 class="text-purple-400 hover:text-purple-300 text-xs bg-purple-600/20 hover:bg-purple-600/30 px-2 py-1 rounded transition-colors"
                                                 title="Send appointment reminder to customer"
                                             >

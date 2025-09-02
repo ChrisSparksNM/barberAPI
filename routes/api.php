@@ -12,6 +12,28 @@ use App\Http\Controllers\HealthController;
 // Health check endpoint (no auth required)
 Route::get('/health', [HealthController::class, 'check']);
 
+// Temporary Stripe configuration test endpoint
+Route::get('/test-stripe', function() {
+    try {
+        $stripeSecret = config('services.stripe.secret');
+        $envStripeSecret = env('STRIPE_SECRET_KEY');
+        
+        return response()->json([
+            'stripe_configured' => !empty($stripeSecret),
+            'config_key_length' => strlen($stripeSecret ?? ''),
+            'config_key_prefix' => $stripeSecret ? substr($stripeSecret, 0, 7) . '...' : 'NOT SET',
+            'env_key_set' => !empty($envStripeSecret),
+            'env_key_prefix' => $envStripeSecret ? substr($envStripeSecret, 0, 7) . '...' : 'NOT SET',
+            'config_cached' => app()->configurationIsCached(),
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'stripe_configured' => false,
+        ], 500);
+    }
+});
+
 // Public routes (no authentication required)
 Route::get('/barbers', [UserRegistrationController::class, 'getBarbers']);
 Route::get('/barbers/{barberName}', [UserRegistrationController::class, 'getBarberByName']);
