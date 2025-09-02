@@ -16,18 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
-        // Global middleware for production security
-        $middleware->append([
-            \App\Http\Middleware\SecurityHeaders::class,
-        ]);
-
         $middleware->alias([
-            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
-            'barber.or.admin' => \App\Http\Middleware\CheckBarberOrAdmin::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         ]);
-
-        // Rate limiting for API routes
-        $middleware->throttle('api', '60,1');
         
         //
     })
