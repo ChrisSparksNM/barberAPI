@@ -51,6 +51,14 @@ class NoShowController extends Controller
             // Get user's default payment method
             $defaultPaymentMethod = $appointment->user->defaultPaymentMethod;
             
+            \Log::info('Checking payment method for no-show charge', [
+                'appointment_id' => $appointment->id,
+                'user_id' => $appointment->user_id,
+                'has_payment_method' => $defaultPaymentMethod !== null,
+                'remaining_amount' => $appointment->remaining_amount,
+                'total_amount' => $appointment->total_amount
+            ]);
+            
             if (!$defaultPaymentMethod) {
                 // Mark as no-show but don't charge (no payment method available)
                 $appointment->markAsNoShow($request->notes . ' (No payment method available for charge)');
@@ -58,12 +66,38 @@ class NoShowController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Appointment marked as no-show. No charge applied - no payment method available.',
-                    'charged' => false
+                    'charged' => false,
+                    'reason' => 'no_payment_method',
+                    'remaining_amount' => $appointment->remaining_amount,
+                    'total_amount' => $appointment->total_amount
                 ]);
             }
 
-            // Calculate charge amount (full service cost)
+            // Calculate charge amount (remaining balance)
             $chargeAmount = $appointment->getNoShowChargeAmount();
+            
+            // Check if there's actually an amount to charge
+            if ($chargeAmount <= 0) {
+                // Mark as no-show but don't charge (no remaining balance)
+                $appointment->markAsNoShow($request->notes . ' (No remaining balance to charge - customer already paid full amount)');
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Appointment marked as no-show. No charge applied - customer already paid full amount.',
+                    'charged' => false,
+                    'charge_amount' => $chargeAmount,
+                    'remaining_amount' => $appointment->remaining_amount,
+                    'total_amount' => $appointment->total_amount
+                ]);
+            }
+            
+            \Log::info('Processing no-show charge', [
+                'appointment_id' => $appointment->id,
+                'charge_amount' => $chargeAmount,
+                'remaining_amount' => $appointment->remaining_amount,
+                'total_amount' => $appointment->total_amount,
+                'deposit_amount' => $appointment->deposit_amount
+            ]);
             
             // Create payment intent for no-show charge (works in both test and live mode)
             try {
