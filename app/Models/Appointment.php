@@ -125,11 +125,13 @@ class Appointment extends Model
     }
 
     /**
-     * Get the no-show charge amount (full service cost)
+     * Get the no-show charge amount (remaining balance only)
      */
     public function getNoShowChargeAmount(): float
     {
-        return floatval($this->total_amount);
+        // Only charge the remaining balance, not the full amount
+        // Customer has already paid the deposit, so only charge what's left
+        return floatval($this->remaining_amount);
     }
 
     /**
