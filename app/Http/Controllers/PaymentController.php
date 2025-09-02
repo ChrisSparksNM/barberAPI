@@ -17,7 +17,12 @@ class PaymentController extends Controller
     public function __construct()
     {
         // Set your Stripe secret key
-        Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
+        $stripeSecret = config('services.stripe.secret');
+        if (empty($stripeSecret)) {
+            \Log::error('Stripe secret key is not configured');
+            throw new \Exception('Stripe configuration is missing');
+        }
+        Stripe::setApiKey($stripeSecret);
     }
 
     /**
