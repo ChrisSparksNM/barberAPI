@@ -20,7 +20,7 @@ Route::middleware("guest")->group(callback: function (): void{
     // Original registration (keep for backward compatibility)
     Route::post('/register', [RegisteredUserController::class, 'store'])
         ->middleware('guest')
-        ->name('register');
+        ->name('api.register');
 
     // New customer registration with email verification
     Route::post('/register/customer', [UserRegistrationController::class, 'registerCustomer'])
@@ -28,13 +28,13 @@ Route::middleware("guest")->group(callback: function (): void{
 
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])
         ->middleware('guest')
-        ->name('login');
+        ->name('api.login');
 });
 
 
 Route::middleware(['auth:sanctum'])->group( function(){
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
-    ->name('logout');
+    ->name('api.logout');
 
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -76,10 +76,10 @@ Route::middleware(['auth:sanctum'])->group( function(){
 
     // Email verification routes
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'sendVerificationEmail'])
-        ->name('verification.send');
+        ->name('api.verification.send');
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verifyEmail'])
         ->middleware(['signed'])
-        ->name('verification.verify');
+        ->name('api.verification.verify');
     Route::get('/email/verification-status', [EmailVerificationController::class, 'checkVerificationStatus']);
 
     // User profile routes
